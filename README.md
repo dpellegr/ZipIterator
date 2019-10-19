@@ -3,10 +3,10 @@ ZipIterator provides a variadic reference-based implementation of a zip iterator
 
 The zip iterator primary target is the solution of a pretty common programming problem in which the permutation applied while sorting a container should be replicated to another container. Or, in other words, sorting a container according to the content of another container.
 
-You can go with range-v3, which is a very powerfull library which has been partially standardized. However its zip iterator did not make it even in C++20, so here is my go to have a lightweight and easy to use implementation of the zip iterator.
+You can go with range-v3, which is a very powerfull library which has been partially standardized. However its implementation of the zip iterator did not make it even in C++20, so here is my attempt to produce a lightweight and easy to use implementation of the zip iterator.
 
 # Usage Example
- Consider this minimal ezample:
+ Consider this minimal example:
   
     #include <vector>
     #include <iostream>
@@ -23,8 +23,7 @@ You can go with range-v3, which is a very powerfull library which has been parti
       return 0;
     }
 
-Here we managed to sort vector a, while at the same time, applying the same permutation to vector b.
-In particular Zip construct a tuple of iterators of the specified containers and handle its dereferentiation to a tuple of plain references to the elements of the containers. The swap operation then affect the content of the original containers and the comparison are standard lexicographic tuple comparisons.
+Here we sort vector a, and, at the same time, we apply the same permutation to vector b.
 
 Printing the content of zipped containers is easy:
 
@@ -36,4 +35,15 @@ The old iterator style for loop is also possible:
       std::cout << *z << '\n';
     }
 
+# Details
+
+The ZipIter class maintains a tuple of iterators of the specified containers, and handles its dereferentiation to a tuple of plain references to the elements of the original containers.
+The helper class Zip, packages a tuple of reference to the specified containers and allow for quick generation of ZipIter objects.
+
 # Notes
+
+As internally tuples are used, all the comparison between the zipped containers proceed in a lexicographical fashion. Therefore when sorting it is important to pass first the container that will be ordered while the other(s) will follow.
+
+In addition the first passed container defines the iterator_category of the resulting ZipIter object, and is used when computing differences of ZipIter.
+
+No range checks are implemented. It is up to the user to pass containers with the same size.
