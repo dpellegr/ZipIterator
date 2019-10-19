@@ -9,6 +9,7 @@ You can go with range-v3, which is a very powerfull library which has been parti
  Consider this minimal example:
   
     #include <vector>
+    #include <algorithm>
     #include <iostream>
     #include "ZipIterator.hpp"
 
