@@ -17,17 +17,7 @@ public:
   using reference         = std::tuple<typename std::iterator_traits<IT>::reference ...>;
 
 private:
-  // This guy holds the various iterators
   std::tuple<IT...> zip;
-
-  // This guy allows faking rvalue binding to non const lvalue reference
-  // when dereferencing the iterator
-  std::unique_ptr<reference> tmp = nullptr;
-  template <size_t I=0>
-  reference& dereference() {
-    tmp.reset( new reference(std::apply([](auto&&... args){ return reference( (*args)... );}, zip)) );
-    return *(tmp.get());
-  }
 
 public:
   ZipIter(const std::tuple<IT...>& z): zip(z) {}
@@ -60,21 +50,22 @@ public:
   bool operator<=(const ZipIter& rhs) const {return !this->operator> (rhs);}
   bool operator>=(const ZipIter& rhs) const {return !this->operator< (rhs);}
 
-  reference& operator*()       {return dereference();}
+  reference  operator*()       {return std::apply([](auto&&... args){ return reference ( (*args)... );}, zip); }
   value_type operator*() const {return std::apply([](auto&&... args){ return value_type( (*args)... );}, zip); }
 
-  reference& operator[](const long n)       {return *(this->operator+(n));}
+  reference  operator[](const long n)       {return *(this->operator+(n));}
   value_type operator[](const long n) const {return *(this->operator+(n));}
 
   template<size_t I=0> auto& get() {return *(std::get<I>(zip));}
-  template<size_t I=0> auto& get_it() {return std::get<I>(zip);}
+  template<size_t I=0> auto& iter_get() {return std::get<I>(zip);}
   template<size_t I=0> auto get() const {return *(std::get<I>(zip));}
-  template<size_t I=0> auto get_it() const {return std::get<I>(zip);}
+  template<size_t I=0> auto iter_get() const {return std::get<I>(zip);}
+
 };
 
 template <typename ...T>
 inline auto operator-(const ZipIter<T...> & lhs, const ZipIter<T...>& rhs) {
-  return std::distance( lhs.template get_it<0>(), rhs.template get_it<0>());
+  return std::distance( lhs.template iter_get<0>(), rhs.template iter_get<0>());
 }
 
 namespace std{
@@ -86,6 +77,14 @@ namespace std{
     ss.seekp(-2, ss.cur); 
     ss << " ]";
     return os << ss.str();
+  }
+
+  //custom std::swap for tuple of references (passed by value), as returned when dereferencing ZipIter
+  template <size_t I = 0, typename... T>
+  void swap(std::tuple<T&...> a, std::tuple<T&...> b) {
+    swap(get<I>(a),get<I>(b));
+    if constexpr(I+1 != sizeof...(T))
+      swap<I+1>(a, b);
   }
 
   template <typename ...T> auto  begin(T&... containers){ return ZipIter( std::begin(containers)...);}
@@ -106,4 +105,3 @@ public:
   auto rbegin(){return std::apply([](auto&&... args){ return ZipIter((args.rbegin())...);}, zip);}
   auto   rend(){return std::apply([](auto&&... args){ return ZipIter((args.  rend())...);}, zip);}
 };
-
