@@ -55,12 +55,6 @@ template<typename ...IT>
 class ZipIter {
   std::tuple<IT...> it;
 
-  template <size_t I = 0, typename F>
-  void apply(F&& f) {
-    f(std::get<I>(it));
-    if constexpr( I+1 < sizeof...(IT) ) apply<I+1>(f);
-  }
-
   template<int N, typename... Ts> using NthTypeOf =
     typename std::tuple_element<N, std::tuple<Ts...>>::type;
   template<typename... Ts> using FirstTypeOf = NthTypeOf<0, Ts...>;
@@ -77,15 +71,15 @@ public:
   ZipIter(const IT&... rhs): it(rhs...) {}
 
   ZipIter& operator=(const ZipIter &rhs) { it = rhs.it; return *this;}
-  ZipIter& operator+=(const difference_type d) { apply([&d](auto&&it){std::advance(it, d);}); return *this;}
-  ZipIter& operator-=(const difference_type d) { apply([&d](auto&&it){std::advance(it,-d);}); return *this;}
+  ZipIter& operator+=(const difference_type d) { std::apply([&d](auto&&...args){((std::advance(args,d)),...);}, it); return *this;}
+  ZipIter& operator-=(const difference_type d) { return operator+=(-d); }
 
   reference operator* () const {return std::apply([](auto&&...args){return reference(&(*(args))...);}, it);}
   pointer   operator->() const {return std::apply([](auto&&...args){return pointer  (&(*(args))...);}, it);}
   reference operator[](difference_type rhs) const {return *(operator+(rhs));}
 
-  ZipIter& operator++() { apply([](auto&&it){++it;}); return *this;}
-  ZipIter& operator--() { apply([](auto&&it){--it;}); return *this;}
+  ZipIter& operator++() { return operator+=( 1); }
+  ZipIter& operator--() { return operator+=(-1); }
   ZipIter operator++(int) {ZipIter tmp(*this); operator++(); return tmp;}
   ZipIter operator--(int) {ZipIter tmp(*this); operator--(); return tmp;}
 
@@ -123,7 +117,6 @@ public:
 using std::swap;
 template<typename ...T> void swap(const ZipRef<T...>& a, const ZipRef<T...>& b) { a.swap(b); }
 
-#include <iostream>
 #include <sstream>
 template< class Ch, class Tr, class...IT, typename std::enable_if<(sizeof...(IT)>0), int>::type = 0>
 auto& operator<<(std::basic_ostream<Ch, Tr>& os, const ZipRef<IT...>& t) {
