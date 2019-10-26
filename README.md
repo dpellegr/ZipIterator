@@ -45,7 +45,7 @@ $ g++ -std=c++17 main.cpp -o main.out && ./main.out
 [ 3, Alice ]
 [ 4, Charles ]
 ```
-What happened behind the curtain was that the same permutations applied by `std::sort` to the elements of vector `a` were simultaneously applied to vector `b` as well.
+Behind the curtain the permutations (either by swapping or copying) applied by `std::sort` to the elements of vector `a` have been simultaneously applied to vector `b` as well.
 
 Note that it would have been possible to zip a third (and more) vector as well, as the implementation leverages on variadic templates.
 
@@ -59,9 +59,9 @@ The helper class Zip, packages a tuple of reference to the specified containers 
 
 # Usage Notes
 
-As internally tuples are used, all the comparison between the zipped containers proceed in a lexicographical fashion. Therefore when sorting it is important to pass first the container that will be ordered while the other(s) will follow.
+As internally tuples are used, all the comparison between the zipped containers proceed in a lexicographical fashion. Therefore when sorting it is important to pass first the container that will be sorted while the other(s) will follow.
 
-In addition the first passed container defines the iterator_category of the resulting ZipIter object, and is used when computing differences of ZipIter.
+In addition the first passed container defines the `iterator_category` of the resulting ZipIter object, and is used when computing differences.
 
 Attempting any operation between ZipIter of different types is undefined behavior.
-Even when types are consistent, no range checks are implemented, the containers being manipulated should have the same size.
+Even when types are consistent, no range checks are implemented: it is up to the user to ensure that the containers being manipulated have the same size.
