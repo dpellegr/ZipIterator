@@ -55,7 +55,7 @@ The ZipIter class maintains a tuple of iterators of the specified containers, an
 
 Here is where the magic take place: the data pointed by ZipRef can be mutable even if ZipRef itself is constant. This allow extending the lifetime of non-const lvalues references of ZipRef (as returned when dereferencing ZipIter) by binding them to const references, while still being able to modify the data being pointed to.
 
-The helper class Zip, packages a tuple of reference to the specified containers and provides syntactic sugar for quick generation of ZipIter objects.
+The helper class Zip packages a tuple of reference to the specified containers and provides syntactic sugar for quick generation of ZipIter objects.
 
 # Usage Notes
 
