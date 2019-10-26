@@ -5,9 +5,9 @@ The zip iterator primary target is the solution of a pretty common programming p
 
 Historically this is approached either copying the data back and forth between arrays of structures and structures of arrays, or by instantiating a container of indexes which allows reproducing the sorting permutation on other containers.
 
-Both approaches are sub-optimal: wouldn't it be nice if one could just sort the data in place without having to instantiate additional memory. ZipIterator has been designed for this purpose!
+Both the approaches are suboptimal: wouldn't it be nice if one could just sort the data in place without having to instantiate additional memory? This is exacte ZipIterator has been designed for this purpose!
 
-# Usage Example
+# Example
  Consider this minimal example:
   
     #include <vector>
@@ -31,8 +31,7 @@ Both approaches are sub-optimal: wouldn't it be nice if one could just sort the 
       return 0;
     }
 
-
-Here vector `a` is sorted and, at the same time, the same permutations are applied to vector `b`. The produced output is:
+ The produced output is:
 
     $ ./main.out
     [ 3, Alice ]
@@ -45,7 +44,9 @@ Here vector `a` is sorted and, at the same time, the same permutations are appli
     [ 3, Alice ]
     [ 4, Charles ]
 
+What appened behind the curtain was that the same permutations applied by `std::sort` to the elements of vector `a` were simultaneously applied to vector `b` as well.
 
+Note that it would have been possible to zip a third (and more) vector as well, as the implementation leverages on variadic templates.
 
 # Details
 
@@ -55,7 +56,7 @@ Here is where the magic take place: the data pointed by ZipRef can be mutable ev
 
 The helper class Zip, packages a tuple of reference to the specified containers and provides syntactic sugar for quick generation of ZipIter objects.
 
-# Notes
+# Usage Notes
 
 As internally tuples are used, all the comparison between the zipped containers proceed in a lexicographical fashion. Therefore when sorting it is important to pass first the container that will be ordered while the other(s) will follow.
 
