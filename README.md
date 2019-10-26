@@ -9,36 +9,46 @@ You can go with range-v3, which is a very powerfull library which has been parti
  Consider this minimal example:
   
     #include <vector>
+    #include <string>
     #include <algorithm>
     #include <iostream>
     #include "ZipIterator.hpp"
 
     int main() {
-      std::vector<int> a{3,2,1};
-      std::vector<std::string> b{"Alice","Bob","Charles"};
+      std::vector<int> a{3,1,4,2};
+      std::vector<std::string> b{"Alice","Bob","Charles","David"};
 
-      std::sort(Zip(a,b).begin(), Zip(a,b).end());
+      auto zip = Zip(a,b);
 
-      assert(a == std::vector<int>{1,2,3});
-      assert(b == std::vector<std::string>{"Charles","Bob","Alice"};
+      for (const auto & z: zip) std::cout << z << std::endl;
+      std::cout << std::endl;
+
+      std::sort(zip.begin(), zip.end());
+
+      for (const auto & z: zip) std::cout << z << std::endl;
       return 0;
     }
 
-Here we sort vector a, and, at the same time, we apply the same permutation to vector b.
 
-Printing the content of zipped containers is easy:
+Here vector a is sorted and, at the same time, the same permutations are applied to vector b. The produced output is:
 
-    for (const auto& z: Zip(a,b)) std::cout << z << '\n';
+    $ ./main.out
+    [ 3, Alice ]
+    [ 1, Bob ]
+    [ 4, Charles ]
+    [ 2, David ]
 
-The old iterator style for loop is also possible:
+    [ 1, Bob ]
+    [ 2, David ]
+    [ 3, Alice ]
+    [ 4, Charles ]
 
-    for (auto z=std::begin(a,b); z < std::end(a,b); ++z) {
-      std::cout << *z << '\n';
-    }
+
 
 # Details
 
-The ZipIter class maintains a tuple of iterators of the specified containers, and handles its dereferentiation to a tuple of plain references to the elements of the original containers.
+The ZipIter class maintains a tuple of iterators of the specified containers, and handles its dereferentiation to a tuple of pointers to the original data, packed into the class ZipRef.
+Here is where the magic take place: the data pointed by ZipRef can be mutable even if ZipRef itself is constant. This allow extending the lifetime of non-const lvalues references of ZipRef (as returned when dereferencing ZipIter) by binding them to const references, while still being able to modify the data being pointed to.
 The helper class Zip, packages a tuple of reference to the specified containers and allow for quick generation of ZipIter objects.
 
 # Notes
@@ -47,4 +57,5 @@ As internally tuples are used, all the comparison between the zipped containers 
 
 In addition the first passed container defines the iterator_category of the resulting ZipIter object, and is used when computing differences of ZipIter.
 
-No range checks are implemented. It is up to the user to pass containers with the same size.
+Attempting any operation between ZipIter of different types is undefined behaviour.
+Even when types are consistent, no range checks are implemented, the containers being manipulated should have the same size.

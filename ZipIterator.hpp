@@ -1,107 +1,138 @@
-#include <iterator>
+//
+// C++17 implementation of ZipIterator by Dario Pellegrini <pellegrini.dario@gmail.com>
+// Still unsure about the licence, but something in the line of just providing attribution
+// October 2019
+//
+
 #include <tuple>
-#include <memory>
-#include <sstream>
 
-template <typename ...IT>
-class ZipIter {
+template <typename ...T>
+class ZipRef {
+  std::tuple<T*...> ptr;
 public:
-  using iterator_category = typename std::iterator_traits<
-                              typename std::tuple_element<0, std::tuple<IT...>>::type
-                            >::iterator_category;
-  using value_type        = std::tuple<typename std::iterator_traits<IT>::value_type ...>;
-  using difference_type   = typename std::iterator_traits<
-                              typename std::tuple_element<0, std::tuple<IT...>>::type
-                            >::difference_type;
-  using pointer           = std::tuple<typename std::iterator_traits<IT>::pointer ...>;
-  using reference         = std::tuple<typename std::iterator_traits<IT>::reference ...>;
+  ZipRef() = delete;
+  ZipRef(const ZipRef& z) = default;
+  ZipRef(ZipRef&& z) = default;
+  ZipRef(T* const... p): ptr(p...) {}
 
-private:
-  std::tuple<IT...> zip;
+  ZipRef& operator=(const ZipRef& z)             { return copy_assign( z); }
+  ZipRef& operator=(const std::tuple<T...>& val) { return val_assign(val); }
 
-public:
-  ZipIter(const std::tuple<IT...>& z): zip(z) {}
-  ZipIter(IT... z): zip(std::make_tuple(z...)) {}
-  ZipIter(const ZipIter& z): zip(z.zip) {}
-  
-  ZipIter& operator=(const ZipIter& z) { zip = z.zip; return *this;}
-  ZipIter& operator=(ZipIter&& z) { zip = std::move(z.zip); return *this;}
-
-  template<typename F>
-  ZipIter& apply(F&& f){ std::apply([&](auto&&... args){ ((*args = f(*args)), ...); }, zip ); return *this; }
-
-  ZipIter& operator+=(const long n) { 
-    std::apply([n](auto&&...args){ ((std::advance(args,n)),...); }, zip );
+  template <size_t I = 0>
+  ZipRef& copy_assign(const ZipRef& z) {
+    *(std::get<I>(ptr)) = *(std::get<I>(z.ptr));
+    if constexpr( I+1 < sizeof...(T) ) return copy_assign<I+1>(z);
     return *this;
   }
-  ZipIter& operator-=(const long n) { return this->operator+=(-n); }
-  ZipIter& operator++()    { return this->operator+=(1); }
-  ZipIter& operator--()    { return this->operator-=(1); }
-  ZipIter  operator++(int) { ZipIter tmp(*this); operator++(); return tmp; }
-  ZipIter  operator--(int) { ZipIter tmp(*this); operator--(); return tmp; }
-  
-  ZipIter operator+(const long n) const { auto res=*this; res+=n; return res; }
-  ZipIter operator-(const long n) const { return *this + (-n); }
+  template <size_t I = 0>
+  ZipRef& val_assign(const std::tuple<T...>& t) {
+    *(std::get<I>(ptr)) = std::get<I>(t);
+    if constexpr( I+1 < sizeof...(T) ) return val_assign<I+1>(t);
+    return *this;
+  }
 
-  bool operator==(const ZipIter& rhs) const {return zip==rhs.zip; }
-  bool operator< (const ZipIter& rhs) const {return zip< rhs.zip; }
-  bool operator!=(const ZipIter& rhs) const {return !this->operator==(rhs);}
-  bool operator> (const ZipIter& rhs) const {return    rhs.operator< (*this);}
-  bool operator<=(const ZipIter& rhs) const {return !this->operator> (rhs);}
-  bool operator>=(const ZipIter& rhs) const {return !this->operator< (rhs);}
+  std::tuple<T...> val() const {return std::apply([](auto&&...args){ return std::tuple((*args)...); }, ptr);}
+  operator std::tuple<T...>() const { return val(); }
 
-  reference  operator*()       {return std::apply([](auto&&... args){ return reference ( (*args)... );}, zip); }
-  value_type operator*() const {return std::apply([](auto&&... args){ return value_type( (*args)... );}, zip); }
+  template <size_t I = 0>
+  void swap(const ZipRef& o) const {
+    std::swap(*(std::get<I>(ptr)), *(std::get<I>(o.ptr)));
+    if constexpr( I+1 < sizeof...(T) ) swap<I+1>(o);
+  }
 
-  reference  operator[](const long n)       {return *(this->operator+(n));}
-  value_type operator[](const long n) const {return *(this->operator+(n));}
+  #define OPERATOR(OP) \
+    bool operator OP(const ZipRef & o) const { return val() OP o.val(); } \
+    inline friend bool operator OP(const ZipRef& r, const std::tuple<T...>& t) { return r.val() OP t; } \
+    inline friend bool operator OP(const std::tuple<T...>& t, const ZipRef& r) { return t OP r.val(); }
 
-  template<size_t I=0> auto& get() {return *(std::get<I>(zip));}
-  template<size_t I=0> auto& iter_get() {return std::get<I>(zip);}
-  template<size_t I=0> auto get() const {return *(std::get<I>(zip));}
-  template<size_t I=0> auto iter_get() const {return std::get<I>(zip);}
+    OPERATOR(==) OPERATOR(<=) OPERATOR(>=)
+    OPERATOR(!=) OPERATOR(<)  OPERATOR(>)
+  #undef OPERATOR
 
 };
 
-template <typename ...T>
-inline auto operator-(const ZipIter<T...> & lhs, const ZipIter<T...>& rhs) {
-  return std::distance( lhs.template iter_get<0>(), rhs.template iter_get<0>());
-}
+template<typename ...IT>
+class ZipIter {
+  std::tuple<IT...> it;
 
-namespace std{
-  template< class Ch, class Tr, template<class...> class TUP, class... Args>
-  auto& operator<<(std::basic_ostream<Ch, Tr>& os, const TUP<Args...>& t) {
-    std::basic_stringstream<Ch, Tr> ss;
-    ss << "[ ";
-    std::apply([&ss](auto&&... args) {((ss << args << ", "), ...);}, t);
-    ss.seekp(-2, ss.cur); 
-    ss << " ]";
-    return os << ss.str();
+  template <size_t I = 0, typename F>
+  void apply(F&& f) {
+    f(std::get<I>(it));
+    if constexpr( I+1 < sizeof...(IT) ) apply<I+1>(f);
   }
 
-  //custom std::swap for tuple of references (passed by value), as returned when dereferencing ZipIter
-  template <size_t I = 0, typename... T>
-  void swap(std::tuple<T&...> a, std::tuple<T&...> b) {
-    swap(get<I>(a),get<I>(b));
-    if constexpr(I+1 != sizeof...(T))
-      swap<I+1>(a, b);
-  }
+  template<int N, typename... Ts> using NthTypeOf =
+    typename std::tuple_element<N, std::tuple<Ts...>>::type;
+  template<typename... Ts> using FirstTypeOf = NthTypeOf<0, Ts...>;
 
-  template <typename ...T> auto  begin(T&... containers){ return ZipIter( std::begin(containers)...);}
-  template <typename ...T> auto    end(T&... containers){ return ZipIter(   std::end(containers)...);}
-  template <typename ...T> auto rbegin(T&... containers){ return ZipIter(std::rbegin(containers)...);}
-  template <typename ...T> auto   rend(T&... containers){ return ZipIter(  std::rend(containers)...);}
-}
+public:
+  using iterator_category = typename std::iterator_traits<FirstTypeOf<IT...>>::iterator_category;
+  using difference_type   = typename std::iterator_traits<FirstTypeOf<IT...>>::difference_type;
+  using value_type        = std::tuple<typename std::iterator_traits<IT>::value_type ...>;
+  using pointer           = std::tuple<typename std::iterator_traits<IT>::pointer ...>;
+  using reference         = ZipRef<typename std::iterator_traits<IT>::value_type ...>;
+
+  ZipIter() = default;
+  ZipIter(const ZipIter &rhs) = default;
+  ZipIter(const IT&... rhs): it(rhs...) {}
+
+  ZipIter& operator=(const ZipIter &rhs) { it = rhs.it; return *this;}
+  ZipIter& operator+=(const difference_type d) { apply([&d](auto&&it){it += d;}); return *this;}
+  ZipIter& operator-=(const difference_type d) { apply([&d](auto&&it){it -= d;}); return *this;}
+
+  reference operator*() const {return std::apply([](auto&&...args){return reference(&(*(args))...);}, it);}
+  pointer  operator->() const {return std::apply([](auto&&...args){return pointer  (&(*(args))...);}, it);}
+  reference operator[](difference_type rhs) const {return *(operator+(rhs));}
+
+  ZipIter& operator++() { apply([](auto&&it){++it;}); return *this;}
+  ZipIter& operator--() { apply([](auto&&it){--it;}); return *this;}
+  ZipIter operator++(int) {ZipIter tmp(*this); operator++(); return tmp;}
+  ZipIter operator--(int) {ZipIter tmp(*this); operator--(); return tmp;}
+
+  difference_type operator-(const ZipIter& rhs) const {return std::get<0>(it)-std::get<0>(rhs.it);}
+  ZipIter operator+(const difference_type d) const {ZipIter tmp(*this); tmp += d; return tmp;}
+  ZipIter operator-(const difference_type d) const {ZipIter tmp(*this); tmp -= d; return tmp;}
+  inline friend ZipIter operator+(const difference_type d, const ZipIter& z) {return z+d;}
+  inline friend ZipIter operator-(const difference_type d, const ZipIter& z) {return z-d;}
+
+  #define OPERATOR(OP) \
+    bool operator OP(const ZipIter& rhs) const {return it OP rhs.it;}
+    OPERATOR(==) OPERATOR(<=) OPERATOR(>=)
+    OPERATOR(!=) OPERATOR(<)  OPERATOR(>)
+  #undef OPERATOR
+};
 
 template<typename ...Container>
 class Zip {
   std::tuple<Container&...> zip;
-public:
-  Zip(Container&... z): zip(std::tie(z...)) {}
-  Zip(const Zip& z): zip(z.zip) {}
 
-  auto  begin(){return std::apply([](auto&&... args){ return ZipIter((args. begin())...);}, zip);}
-  auto    end(){return std::apply([](auto&&... args){ return ZipIter((args.   end())...);}, zip);}
-  auto rbegin(){return std::apply([](auto&&... args){ return ZipIter((args.rbegin())...);}, zip);}
-  auto   rend(){return std::apply([](auto&&... args){ return ZipIter((args.  rend())...);}, zip);}
+public:
+  Zip() = delete;
+  Zip(const Zip& z) = default;
+  Zip(Zip&& z) = default;
+  Zip(Container&... z): zip(z...) {}
+
+  #define HELPER(OP) \
+    auto OP(){return std::apply([](auto&&... args){ return ZipIter((args.OP())...);}, zip);}
+    HELPER( begin) HELPER( end)
+    HELPER(rbegin) HELPER(rend)
+  #undef HELPER
 };
+
+#include <iostream>
+#include <sstream>
+template< class Ch, class Tr, class...IT, typename std::enable_if<(sizeof...(IT)>0), int>::type = 0>
+auto& operator<<(std::basic_ostream<Ch, Tr>& os, const ZipRef<IT...>& t) {
+  std::basic_stringstream<Ch, Tr> ss;
+  ss << "[ ";
+  std::apply([&ss](auto&&... args) {((ss << args << ", "), ...);}, t.val());
+  ss.seekp(-2, ss.cur);
+  ss << " ]";
+  return os << ss.str();
+}
+
+
+#include <utility>
+using std::swap;
+template<typename ...T> void swap(const ZipRef<T...>& a, const ZipRef<T...>& b) { a.swap(b); }
+
