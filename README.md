@@ -1,50 +1,51 @@
-# ZipIterator
-ZipIterator provides a variadic reference-based implementation of a zip iterator in C++(>=17).
+# C++17 ZipIterator
+ZipIterator provides a variadic pointer-based implementation of the zip iterator pattern in C++(>=17).
 
-The zip iterator primary target is the solution of a pretty common programming problem in which the permutation applied when sorting a container, should be replicated to another container. Or, in other words, sorting a container according to the content of another container.
+One of the main problems targeted by the zip iterator consists of sorting a container while replicating the same permutations to another container. Or, in other words, sorting a container according to the content of another container.
 
-Historically this is approached either copying the data back and forth between arrays of structures and structures of arrays, or by instantiating a container of indexes which allows reproducing the sorting permutation on other containers.
+Historically this problem has often been approached in C++ either copying the data back and forth between arrays of structures and structures of arrays, or by instantiating a container of indexes to keep track of the permutations.
 
-Both the approaches are suboptimal: wouldn't it be nice if one could just sort the data in place without having to instantiate additional memory? This is exacte ZipIterator has been designed for this purpose!
+Both the approaches are suboptimal: wouldn't it be nice if one could just sort the data in place without having to instantiate additional memory? The purpose of ZipIterator is exactly this!
 
 # Example
  Consider this minimal example:
-  
-    #include <vector>
-    #include <string>
-    #include <algorithm>
-    #include <iostream>
-    #include "ZipIterator.hpp"
 
-    int main() {
-      std::vector<int> a{3,1,4,2};
-      std::vector<std::string> b{"Alice","Bob","Charles","David"};
+```c++
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <iostream>
+#include "ZipIterator.hpp" //Header only ;)
 
-      auto zip = Zip(a,b);
+int main() {
+  std::vector<int> a{3,1,4,2};
+  std::vector<std::string> b{"Alice","Bob","Charles","David"};
 
-      for (const auto & z: zip) std::cout << z << std::endl;
-      std::cout << std::endl;
+  auto zip = Zip(a,b);
 
-      std::sort(zip.begin(), zip.end());
+  for (const auto & z: zip) std::cout << z << std::endl;
+  std::cout << std::endl;
 
-      for (const auto & z: zip) std::cout << z << std::endl;
-      return 0;
-    }
+  std::sort(zip.begin(), zip.end());
 
- The produced output is:
+  for (const auto & z: zip) std::cout << z << std::endl;
+  return 0;
+}
+```
+It can be compiled by simply enabling the c++17 (or more recent) standard and the produced output is:
+```bash
+$ g++ -std=c++17 main.cpp -o main.out && ./main.out
+[ 3, Alice ]
+[ 1, Bob ]
+[ 4, Charles ]
+[ 2, David ]
 
-    $ ./main.out
-    [ 3, Alice ]
-    [ 1, Bob ]
-    [ 4, Charles ]
-    [ 2, David ]
-
-    [ 1, Bob ]
-    [ 2, David ]
-    [ 3, Alice ]
-    [ 4, Charles ]
-
-What appened behind the curtain was that the same permutations applied by `std::sort` to the elements of vector `a` were simultaneously applied to vector `b` as well.
+[ 1, Bob ]
+[ 2, David ]
+[ 3, Alice ]
+[ 4, Charles ]
+```
+What happened behind the curtain was that the same permutations applied by `std::sort` to the elements of vector `a` were simultaneously applied to vector `b` as well.
 
 Note that it would have been possible to zip a third (and more) vector as well, as the implementation leverages on variadic templates.
 
@@ -62,5 +63,5 @@ As internally tuples are used, all the comparison between the zipped containers 
 
 In addition the first passed container defines the iterator_category of the resulting ZipIter object, and is used when computing differences of ZipIter.
 
-Attempting any operation between ZipIter of different types is undefined behaviour.
+Attempting any operation between ZipIter of different types is undefined behavior.
 Even when types are consistent, no range checks are implemented, the containers being manipulated should have the same size.
