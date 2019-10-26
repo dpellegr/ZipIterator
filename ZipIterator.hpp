@@ -55,9 +55,9 @@ template<typename ...IT>
 class ZipIter {
   std::tuple<IT...> it;
 
-  template<int N, typename... Ts> using NthTypeOf =
-    typename std::tuple_element<N, std::tuple<Ts...>>::type;
-  template<typename... Ts> using FirstTypeOf = NthTypeOf<0, Ts...>;
+  template<int N, typename... T> using NthTypeOf =
+    typename std::tuple_element<N, std::tuple<T...>>::type;
+  template<typename... T> using FirstTypeOf = NthTypeOf<0, T...>;
 
 public:
   using iterator_category = typename std::iterator_traits<FirstTypeOf<IT...>>::iterator_category;
@@ -68,10 +68,15 @@ public:
 
   ZipIter() = default;
   ZipIter(const ZipIter &rhs) = default;
+  ZipIter(ZipIter&& rhs) = default;
   ZipIter(const IT&... rhs): it(rhs...) {}
 
-  ZipIter& operator=(const ZipIter &rhs) { it = rhs.it; return *this;}
-  ZipIter& operator+=(const difference_type d) { std::apply([&d](auto&&...args){((std::advance(args,d)),...);}, it); return *this;}
+  ZipIter& operator=(const ZipIter& rhs) = default;
+  ZipIter& operator=(ZipIter&& rhs) = default;
+
+  ZipIter& operator+=(const difference_type d) { 
+    std::apply([&d](auto&&...args){((std::advance(args,d)),...);}, it); return *this;
+  }
   ZipIter& operator-=(const difference_type d) { return operator+=(-d); }
 
   reference operator* () const {return std::apply([](auto&&...args){return reference(&(*(args))...);}, it);}
