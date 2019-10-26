@@ -1,9 +1,11 @@
 # ZipIterator
 ZipIterator provides a variadic reference-based implementation of a zip iterator in C++(>=17).
 
-The zip iterator primary target is the solution of a pretty common programming problem in which the permutation applied while sorting a container should be replicated to another container. Or, in other words, sorting a container according to the content of another container.
+The zip iterator primary target is the solution of a pretty common programming problem in which the permutation applied when sorting a container, should be replicated to another container. Or, in other words, sorting a container according to the content of another container.
 
-You can go with range-v3, which is a very powerfull library which has been partially standardized. However its implementation of the zip iterator did not make it even in C++20, so here is my attempt to produce a lightweight and easy to use implementation of the zip iterator.
+Historically this is approached either copying the data back and forth between arrays of structures and structures of arrays, or by instantiating a container of indexes which allows reproducing the sorting permutation on other containers.
+
+Both approaches are sub-optimal: wouldn't it be nice if one could just sort the data in place without having to instantiate additional memory. ZipIterator has been designed for this purpose!
 
 # Usage Example
  Consider this minimal example:
@@ -30,7 +32,7 @@ You can go with range-v3, which is a very powerfull library which has been parti
     }
 
 
-Here vector a is sorted and, at the same time, the same permutations are applied to vector b. The produced output is:
+Here vector `a` is sorted and, at the same time, the same permutations are applied to vector `b`. The produced output is:
 
     $ ./main.out
     [ 3, Alice ]
@@ -48,8 +50,10 @@ Here vector a is sorted and, at the same time, the same permutations are applied
 # Details
 
 The ZipIter class maintains a tuple of iterators of the specified containers, and handles its dereferentiation to a tuple of pointers to the original data, packed into the class ZipRef.
+
 Here is where the magic take place: the data pointed by ZipRef can be mutable even if ZipRef itself is constant. This allow extending the lifetime of non-const lvalues references of ZipRef (as returned when dereferencing ZipIter) by binding them to const references, while still being able to modify the data being pointed to.
-The helper class Zip, packages a tuple of reference to the specified containers and allow for quick generation of ZipIter objects.
+
+The helper class Zip, packages a tuple of reference to the specified containers and provides syntactic sugar for quick generation of ZipIter objects.
 
 # Notes
 
