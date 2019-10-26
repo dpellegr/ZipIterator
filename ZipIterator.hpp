@@ -77,11 +77,11 @@ public:
   ZipIter(const IT&... rhs): it(rhs...) {}
 
   ZipIter& operator=(const ZipIter &rhs) { it = rhs.it; return *this;}
-  ZipIter& operator+=(const difference_type d) { apply([&d](auto&&it){it += d;}); return *this;}
-  ZipIter& operator-=(const difference_type d) { apply([&d](auto&&it){it -= d;}); return *this;}
+  ZipIter& operator+=(const difference_type d) { apply([&d](auto&&it){std::advance(it, d);}); return *this;}
+  ZipIter& operator-=(const difference_type d) { apply([&d](auto&&it){std::advance(it,-d);}); return *this;}
 
-  reference operator*() const {return std::apply([](auto&&...args){return reference(&(*(args))...);}, it);}
-  pointer  operator->() const {return std::apply([](auto&&...args){return pointer  (&(*(args))...);}, it);}
+  reference operator* () const {return std::apply([](auto&&...args){return reference(&(*(args))...);}, it);}
+  pointer   operator->() const {return std::apply([](auto&&...args){return pointer  (&(*(args))...);}, it);}
   reference operator[](difference_type rhs) const {return *(operator+(rhs));}
 
   ZipIter& operator++() { apply([](auto&&it){++it;}); return *this;}
@@ -119,6 +119,10 @@ public:
   #undef HELPER
 };
 
+#include <utility>
+using std::swap;
+template<typename ...T> void swap(const ZipRef<T...>& a, const ZipRef<T...>& b) { a.swap(b); }
+
 #include <iostream>
 #include <sstream>
 template< class Ch, class Tr, class...IT, typename std::enable_if<(sizeof...(IT)>0), int>::type = 0>
@@ -130,9 +134,4 @@ auto& operator<<(std::basic_ostream<Ch, Tr>& os, const ZipRef<IT...>& t) {
   ss << " ]";
   return os << ss.str();
 }
-
-
-#include <utility>
-using std::swap;
-template<typename ...T> void swap(const ZipRef<T...>& a, const ZipRef<T...>& b) { a.swap(b); }
 
