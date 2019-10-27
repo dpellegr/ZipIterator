@@ -9,7 +9,6 @@ Both the approaches are suboptimal: wouldn't it be nice if one could just sort t
 
 # Example
  Consider this minimal example:
-
 ```c++
 #include <vector>
 #include <string>
@@ -32,7 +31,7 @@ int main() {
   return 0;
 }
 ```
-It can be compiled by simply enabling the c++17 (or more recent) standard and the produced output is:
+It can be compiled by simply enabling the c++17 (or more recent) standard and it produces the following output:
 ```bash
 $ g++ -std=c++17 main.cpp -o main.out && ./main.out
 [ 3, Alice ]
