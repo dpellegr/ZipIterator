@@ -1,4 +1,6 @@
 # C++17 ZipIterator
+**Note** Althought nice and compact, this implementation ignores a C++ specification regarding `iterator_category` and may give undefined behaviour. Most of the implementations of the standard library do not rely on that specifications. Indeed many find it over-restrictive and it has been proposed for dropping from future C++ standards. Anyway, please throghfully test your user case/environment before relying on it. For more info: https://codereview.stackexchange.com/questions/231352/c17-zip-iterator-compatible-with-stdsort
+
 ZipIterator provides a variadic pointer-based implementation of the zip iterator pattern in C++(>=17).
 
 One of the main problems targeted by the zip iterator consists of sorting a container while replicating the same permutations to another container. Or, in other words, sorting a container according to the content of another container.
