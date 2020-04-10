@@ -1,5 +1,5 @@
 # C++17 ZipIterator
-**Note** Althought nice and compact, this implementation ignores a C++ specification regarding `iterator_category` and may give undefined behaviour. Most of the implementations of the standard library do not rely on that specifications. Indeed many find it over-restrictive and it has been proposed for dropping from future C++ standards. Anyway, please throghfully test your user case/environment before relying on it. For more info: https://codereview.stackexchange.com/questions/231352/c17-zip-iterator-compatible-with-stdsort
+***Note** Althought nice and compact, this implementation ignores a C++ specification regarding `iterator_category` and may give undefined behaviour. Most of the implementations of the standard library do not rely on that specifications. Indeed many find it over-restrictive and it has been proposed for dropping from future C++ standards. Anyway, please throghfully test your user case/environment before relying on it. For more info: https://codereview.stackexchange.com/questions/231352/c17-zip-iterator-compatible-with-stdsort*
 
 ZipIterator provides a variadic pointer-based implementation of the zip iterator pattern in C++(>=17).
 
