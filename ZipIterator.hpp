@@ -69,6 +69,15 @@ struct tuple_element<N, ZipRef<T...>> {
 template<typename...T>
 struct tuple_size<ZipRef<T...>>: public std::integral_constant<std::size_t, sizeof...(T)> {};
 
+template<std::size_t N, typename...T>
+decltype(auto) get(ZipRef<T...> &r) {
+    return r.template get<N>();
+}
+template<std::size_t N, typename...T>
+decltype(auto) get(const ZipRef<T...> &r) {
+    return r.template get<N>();
+}
+
 } // namespace std
 
 template<typename ...IT>
@@ -103,7 +112,7 @@ public:
   ZipIter& operator=(const ZipIter& rhs) = default;
   ZipIter& operator=(ZipIter&& rhs) = default;
 
-  ZipIter& operator+=(const difference_type d) { 
+  ZipIter& operator+=(const difference_type d) {
     std::apply([&d](auto&&...args){((std::advance(args,d)),...);}, it); return *this;
   }
   ZipIter& operator-=(const difference_type d) { return operator+=(-d); }
@@ -123,7 +132,7 @@ public:
   inline friend ZipIter operator+(const difference_type d, const ZipIter& z) {return z+d;}
   inline friend ZipIter operator-(const difference_type d, const ZipIter& z) {return z-d;}
 
-  // Since operator== and operator!= are often used to terminate cycles, 
+  // Since operator== and operator!= are often used to terminate cycles,
   // defining them as follow prevents incrementing behind the end() of a container
   bool operator==(const ZipIter& rhs) const { return  one_is_equal(rhs); }
   bool operator!=(const ZipIter& rhs) const { return none_is_equal(rhs); }
