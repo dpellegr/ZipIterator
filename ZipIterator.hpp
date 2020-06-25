@@ -155,7 +155,8 @@ public:
 
   #define HELPER(OP) \
     auto OP(){return std::apply([](auto&&... args){ return ZipIter((args.OP())...);}, zip);} \
-    auto c##OP() const {return std::apply([](auto&&... args){ return ZipIter((args.c##OP())...);}, zip);}
+    auto c##OP() const {return std::apply([](auto&&... args){ return ZipIter((args.c##OP())...);}, zip);} \
+    auto OP() const {return this->c##OP();}
 
     HELPER( begin) HELPER( end)
     HELPER(rbegin) HELPER(rend)
