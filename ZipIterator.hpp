@@ -12,6 +12,7 @@
 
 template <typename ...T>
 class ZipRef {
+protected:
   std::tuple<T*...> ptr;
 
   template <std::size_t I = 0>
@@ -43,6 +44,11 @@ public:
     if constexpr(I+1 < sizeof...(T)) swap_data<I+1>(o);
   }
 
+  template<std::size_t N = 0>
+  decltype(auto) get() {return *std::get<N>(ptr);}
+  template<std::size_t N = 0>
+  decltype(auto) get() const {return *std::get<N>(ptr);}
+
   #define OPERATOR(OP) \
     bool operator OP(const ZipRef & o) const { return val() OP o.val(); } \
     inline friend bool operator OP(const ZipRef& r, const std::tuple<T...>& t) { return r.val() OP t; } \
@@ -52,6 +58,18 @@ public:
     OPERATOR(!=) OPERATOR(<)  OPERATOR(>)
   #undef OPERATOR
 };
+
+namespace std {
+
+template<std::size_t N, typename...T>
+struct tuple_element<N, ZipRef<T...>> {
+    using type = decltype(std::get<N>(std::declval<ZipRef<T...>>().val()));
+};
+
+template<typename...T>
+struct tuple_size<ZipRef<T...>>: public std::integral_constant<std::size_t, sizeof...(T)> {};
+
+} // namespace std
 
 template<typename ...IT>
 class ZipIter {

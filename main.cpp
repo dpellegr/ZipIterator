@@ -1,20 +1,19 @@
 #include <vector>
+#include <numeric>
 #include <string>
 #include <algorithm>
 #include <iostream>
+#include <cassert>
 #include "ZipIterator.hpp"
 
 int main() {
-  std::vector<int> a{3,1,4,2};
-  std::vector<std::string> b{"Alice","Bob","Charles","David"};
-
-  auto zip = Zip(a,b);
-
-  for (const auto & z: zip) std::cout << z << std::endl;
-  std::cout << std::endl;
-
-  std::sort(zip.begin(), zip.end());
-
-  for (const auto & z: zip) std::cout << z << std::endl;
+  std::vector<int> a(1000000);
+  std::iota(a.begin(), a.end(), 0);
+  std::vector<std::string> b(1000000);
+    for(auto &i: b) i = std::to_string(&i - b.data());
+  auto z = Zip(a, b);
+  for(const auto &[x, y]: z) {
+    assert(std::to_string(x) == y);
+  }
   return 0;
 }
