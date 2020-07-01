@@ -52,15 +52,15 @@ Note that it would have been possible to zip a third (and more) vector as well, 
 
 # Details
 
-The ZipIter class maintains a tuple of iterators of the specified containers, and handles its dereferentiation to a tuple of pointers to the original data, packed into the class ZipRef.
+The `ZipIter` class maintains a tuple of iterators of the specified containers, and handles its dereferentiation to a tuple of pointers to the original data, packed into the class `ZipRef`.
 
-Here is where the magic take place: the data pointed by ZipRef can be mutable even if ZipRef itself is constant. This allow extending the lifetime of non-const lvalues references of ZipRef (as the one returned when dereferencing ZipIter) by binding them to const references, while still being able, later, to modify the data being pointed to.
+Here is where the magic take place: the data pointed by `ZipRef` can be mutable even if `ZipRef` itself is constant. This allow extending the lifetime of non-const lvalues references of `ZipRef` (as the one returned when dereferencing `ZipIter`) by binding them to const references, while still being able, later, to modify the data being pointed to.
 
-The helper class Zip packages a tuple of reference to the specified containers and provides syntactic sugar for quick generation of ZipIter objects.
+The helper class `Zip` provides syntactic sugar for quick generation of `ZipIter` objects by automatizing the creation of the tuple of references from the specified containers.
 
 # Usage Notes
 
-As internally tuples are used, all the comparisons between the zipped containers proceed in a lexicographical fashion. Therefore when sorting it is important to pass the container that will be sorted as the first argument, while the other(s) will follow. In addition the first passed container defines the `iterator_category` of the resulting ZipIter object, and is used when computing differences.
+As internally tuples are used, all the comparisons between the zipped containers proceed in a lexicographical fashion. Therefore the container that is passed first has a special relevance: for instance, it will define the order of the zipped iterators when sorting. In addition it defines the `iterator_category` of the resulting `ZipIter` object (which may or may not be consistent with the other zipped iterators), and it is used when computing distances.
 
 Attempting any operation between ZipIters of different types is undefined behavior.
 Even when types are consistent, no range checks are implemented: it is up to the user to ensure that the containers being manipulated have the same size although this is may not be a strict requirement depending on how the iterator is then used.
