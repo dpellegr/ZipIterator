@@ -1,10 +1,14 @@
 //
 // C++17 implementation of ZipIterator by Dario Pellegrini <pellegrini.dario@gmail.com>
-// Still unsure about the licence, but something in the line of just providing attribution
-// October 2019
+// Originally created: October 2019
 //
-// Include suggestions from https://codereview.stackexchange.com/questions/231352/c17-zip-iterator-compatible-with-stdsort
+// Includes suggestions from https://codereview.stackexchange.com/questions/231352/c17-zip-iterator-compatible-with-stdsort
 //
+// Licence: Creative Commons Zero v1.0 Universal
+// See LICENCE.md file accompaining this file
+//
+
+#pragma once
 
 #include <cstddef>
 #include <tuple>
